@@ -36,14 +36,6 @@ def submit_transaction(random):
                        })
 
 
-@app.route('/contract/get/', methods=['GET', 'POST'])
-def get_contract():
-    address = request.args.get('address')
-    if not address:
-        return 'Error: your must have a address to request !%s' % address
-    return json.dumps(BaseUtils.get_data(address=address, block=BaseUtils.block_chain_have_sync[:]))
-
-
 @app.route('/transaction/get', methods=['GET', 'POST'])
 def get_transaction():
     values = request.values
@@ -83,7 +75,6 @@ def register_node():
         httpRequest.request('GET', url='http://%s/node/register?data=%s&addr=%s&first=0' % (i.addr, data, addr))
     result = json.loads(requests.get('http://%s/block/sync/first' % addr).text)
     if first == '1':
-        # threading.Thread(target=BaseUtils.get_data_to_node, args=(result['ip'], result['port'])).start()
         threading.Thread(target=BaseUtils.get_data_to_nodeByHttp, args=(result['ip'],)).start()
         BaseUtils.block_chain_have_sync = BaseUtils.load_all_block(result['block_chain_have_sync'])
         BaseUtils.block_chain_not_sync = BaseUtils.load_all_block(result['block_chain_not_sync'])
@@ -150,10 +141,6 @@ def add_new_sync():
                 BaseUtils.block_chain_not_sync.pop(0)
     if BaseUtils.block_chain_not_sync:
         BaseUtils.block_chain_not_sync[0].previous_hash = BaseUtils.block_chain_have_sync[-1].hash
-        block_chain_flush = BaseUtils.block_chain_have_sync[:]
-        for i in BaseUtils.block_chain_not_sync:
-            block_chain_flush.append(i)
-            i.contract_data = BaseUtils.flush_data_cache(block_chain_flush)
     return 'Success: sync finish!'
 
 
